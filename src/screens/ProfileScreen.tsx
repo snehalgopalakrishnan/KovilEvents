@@ -1,28 +1,46 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
-import { TEMPLES } from '../data/mockData';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { useAuth } from '../context/AuthContext';
+import { useFollow } from '../hooks/useFollow';
 import { Temple } from '../types/Temple';
 
-const FOLLOWED_IDS = ['t1', 't3'];
-
 export default function ProfileScreen() {
-  const [followed, setFollowed] = useState<string[]>(FOLLOWED_IDS);
+  const { user, logout } = useAuth();
+  const { followedTemples, unfollow } = useFollow();
+  const [temples, setTemples] = useState<Temple[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const followedTemples = TEMPLES.filter(t => followed.includes(t.id));
+  useEffect(() => {
+    async function loadTemples() {
+      if (followedTemples.length === 0) {
+        setTemples([]);
+        setLoading(false);
+        return;
+      }
+      const templeData: Temple[] = [];
+      for (const id of followedTemples) {
+        const snap = await getDoc(doc(db, 'temples', id));
+        if (snap.exists()) {
+          templeData.push({ id: snap.id, ...snap.data() } as Temple);
+        }
+      }
+      setTemples(templeData);
+      setLoading(false);
+    }
+    loadTemples();
+  }, [followedTemples]);
 
-  function unfollow(templeId: string) {
-    setFollowed(prev => prev.filter(id => id !== templeId));
-  }
+  const initials = user?.email?.charAt(0).toUpperCase() ?? 'U';
 
   return (
     <View style={styles.container}>
-
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>B</Text>
+          <Text style={styles.avatarText}>{initials}</Text>
         </View>
-        <Text style={styles.name}>Bhavani</Text>
-        <Text style={styles.email}>bhavani@example.com</Text>
+        <Text style={styles.email}>{user?.email}</Text>
       </View>
 
       <ScrollView
@@ -30,34 +48,37 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <Text style={styles.sectionLabel}>
+          Following ({followedTemples.length})
+        </Text>
 
-        <Text style={styles.sectionLabel}>Following ({followedTemples.length})</Text>
-
-        {followedTemples.length === 0 && (
+        {loading ? (
+          <ActivityIndicator color="#B45309" style={{ marginTop: 20 }} />
+        ) : followedTemples.length === 0 ? (
           <View style={styles.emptyBox}>
             <Text style={styles.emptyText}>You are not following any temples yet.</Text>
             <Text style={styles.emptySubText}>Go to the Temples tab to follow temples and get event alerts.</Text>
           </View>
+        ) : (
+          temples.map(temple => (
+            <View key={temple.id} style={styles.card}>
+              <View style={styles.iconBox}>
+                <Text style={styles.iconText}>🛕</Text>
+              </View>
+              <View style={styles.cardContent}>
+                <Text style={styles.templeName}>{temple.name}</Text>
+                <Text style={styles.location}>📍 {temple.location}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.unfollowBtn}
+                onPress={() => unfollow(temple.id)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.unfollowText}>Unfollow</Text>
+              </TouchableOpacity>
+            </View>
+          ))
         )}
-
-        {followedTemples.map(temple => (
-          <View key={temple.id} style={styles.card}>
-            <View style={styles.iconBox}>
-              <Text style={styles.iconText}>🛕</Text>
-            </View>
-            <View style={styles.cardContent}>
-              <Text style={styles.templeName}>{temple.name}</Text>
-              <Text style={styles.location}>📍 {temple.location}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.unfollowBtn}
-              onPress={() => unfollow(temple.id)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.unfollowText}>Unfollow</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
 
         <Text style={styles.sectionLabel}>Settings</Text>
 
@@ -69,19 +90,17 @@ export default function ProfileScreen() {
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity style={styles.settingsRow} activeOpacity={0.7}>
-            <Text style={styles.settingsIcon}>🌐</Text>
-            <Text style={styles.settingsLabel}>Language</Text>
-            <Text style={styles.settingsArrow}>›</Text>
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity style={styles.settingsRow} activeOpacity={0.7}>
             <Text style={styles.settingsIcon}>ℹ️</Text>
             <Text style={styles.settingsLabel}>About KovilEvents</Text>
             <Text style={styles.settingsArrow}>›</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={styles.signOutBtn}
+          onPress={logout}
+          activeOpacity={0.8}
+        >
           <Text style={styles.signOutText}>Sign out</Text>
         </TouchableOpacity>
 
@@ -115,15 +134,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#92400E',
   },
-  name: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
   email: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: 2,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
   },
   scroll: {
     flex: 1,

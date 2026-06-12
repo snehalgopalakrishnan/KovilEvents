@@ -1,16 +1,16 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Text } from 'react-native';
+import { Text, ActivityIndicator, View } from 'react-native';
+
 import EventsScreen from './src/screens/EventsScreen';
 import TemplesScreen from './src/screens/TemplesScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
-
+import LoginScreen from './src/screens/LoginScreen';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
 
 function TabNavigator() {
   return (
@@ -29,33 +29,49 @@ function TabNavigator() {
       <Tab.Screen
         name="Events"
         component={EventsScreen}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📅</Text> }}
+        options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>📅</Text> }}
       />
       <Tab.Screen
         name="Temples"
         component={TemplesScreen}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🛕</Text> }}
+        options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>🛕</Text> }}
       />
       <Tab.Screen
         name="Notifications"
         component={NotificationsScreen}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🔔</Text> }}
+        options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>🔔</Text> }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>👤</Text> }}
+        options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>👤</Text> }}
       />
     </Tab.Navigator>
   );
 }
 
+function RootNavigator() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#B45309" />
+      </View>
+    );
+  }
+
+  return user ? <TabNavigator /> : <LoginScreen />;
+}
+
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <TabNavigator />
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <AuthProvider>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </AuthProvider>
   );
 }

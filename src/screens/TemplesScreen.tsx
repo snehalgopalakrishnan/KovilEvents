@@ -1,16 +1,24 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
-import { TEMPLES } from '../data/mockData';
-import { EVENTS } from '../data/mockData';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useEffect, useState } from 'react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../../firebase';
 import { Temple } from '../types/Temple';
-
-function getEventCount(templeId: string) {
-  return EVENTS.filter(e => e.templeId === templeId).length;
-}
+import { useFollow } from '../hooks/useFollow';
+import { useAuth } from '../context/AuthContext';
 
 function TempleCard({ temple }: { temple: Temple }) {
-  const [following, setFollowing] = useState(false);
-  const eventCount = getEventCount(temple.id);
+  const { follow, unfollow, isFollowing } = useFollow();
+  const { user } = useAuth();
+  const following = isFollowing(temple.id);
+
+  async function handleFollow() {
+    if (!user) return;
+    if (following) {
+      await unfollow(temple.id);
+    } else {
+      await follow(temple.id);
+    }
+  }
 
   return (
     <View style={styles.card}>
@@ -20,11 +28,10 @@ function TempleCard({ temple }: { temple: Temple }) {
       <View style={styles.cardContent}>
         <Text style={styles.templeName}>{temple.name}</Text>
         <Text style={styles.location}>📍 {temple.location}</Text>
-        <Text style={styles.eventCount}>{eventCount} upcoming event{eventCount !== 1 ? 's' : ''}</Text>
       </View>
       <TouchableOpacity
         style={[styles.followBtn, following && styles.followingBtn]}
-        onPress={() => setFollowing(!following)}
+        onPress={handleFollow}
         activeOpacity={0.8}
       >
         <Text style={[styles.followText, following && styles.followingText]}>
@@ -36,24 +43,43 @@ function TempleCard({ temple }: { temple: Temple }) {
 }
 
 export default function TemplesScreen() {
+  const [temples, setTemples] = useState<Temple[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'temples'), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Temple[];
+      setTemples(data);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
     <View style={styles.container}>
-
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Temples</Text>
         <Text style={styles.headerSub}>Follow to get event alerts</Text>
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {TEMPLES.map(temple => (
-          <TempleCard key={temple.id} temple={temple} />
-        ))}
-      </ScrollView>
-
+      {loading ? (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="large" color="#B45309" />
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {temples.map(temple => (
+            <TempleCard key={temple.id} temple={temple} />
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -80,6 +106,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6B7280',
     marginTop: 2,
+  },
+  loadingBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scroll: {
     flex: 1,
@@ -122,11 +153,6 @@ const styles = StyleSheet.create({
   location: {
     fontSize: 11,
     color: '#6B7280',
-  },
-  eventCount: {
-    fontSize: 11,
-    color: '#B45309',
-    marginTop: 2,
   },
   followBtn: {
     paddingHorizontal: 14,
