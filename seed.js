@@ -21,6 +21,8 @@ const temples = [
     imageUrl: '',
     phone: '',
     timing: '5:30 AM – 8:00 PM',
+    latitude: 10.7804268,
+    longitude: 76.6549338,
   },
   {
     name: 'Sree Chinmaya Guruvayurappan Temple',
@@ -29,6 +31,8 @@ const temples = [
     imageUrl: '',
     phone: '+91 491 252 7366',
     timing: '5:00 – 10:30 AM, 5:00 – 8:00 PM',
+    latitude: 10.7844041,
+    longitude: 76.6535289,
   },
   {
     name: 'Sree Vishalakshi Samathe Vishwanatha Temple',
@@ -37,6 +41,8 @@ const temples = [
     imageUrl: '',
     phone: '+91 95443 41666',
     timing: '5:00 AM – 7:30 PM',
+    latitude: 10.783469,
+    longitude: 76.656429,
   },
   {
     name: 'Shri Vishweshwara Temple',
@@ -45,6 +51,8 @@ const temples = [
     imageUrl: '',
     phone: '+91 94969 57317',
     timing: '5:00 AM – 8:00 PM',
+    latitude: 10.7555915,
+    longitude: 76.6481794,
   },
 ];
 

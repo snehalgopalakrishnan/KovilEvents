@@ -49,7 +49,7 @@ export default function ProfileScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 <Text style={styles.sectionLabel}>
-                    Following ({followedTemples.length})
+                    Following ({temples.length})
                 </Text>
 
                 {loading ? (

@@ -4,4 +4,8 @@ export type Temple = {
   location: string;
   description: string;
   imageUrl: string;
+  phone?: string;
+  timing?: string;
+  latitude?: number;
+  longitude?: number;
 };

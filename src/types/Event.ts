@@ -7,4 +7,6 @@ export type KovilEvent = {
   date: string;
   time: string;
   type: 'festival' | 'ritual' | 'procession' | 'other';
+  pdfUrl?: string;
+  pdfName?: string;
 };

@@ -13,6 +13,7 @@ import AdminDashboardScreen from './src/screens/admin/AdminDashboardScreen';
 import AdminEventFormScreen from './src/screens/admin/AdminEventFormScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { useNotifications } from './src/hooks/useNotifications';
+import TempleDetailScreen from './src/screens/TempleDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -81,6 +82,7 @@ function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={TabNavigator} />
       <Stack.Screen name="AddEvent" component={AdminEventFormScreen} />
+      <Stack.Screen name="TempleDetail" component={TempleDetailScreen} />
     </Stack.Navigator>
   );
 }
