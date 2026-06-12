@@ -40,5 +40,6 @@ yarn-error.*
 /ios
 /android
 .claude
-CLAUDE.mdserviceAccountKey.json
+CLAUDE.md
+serviceAccountKey.json
 setAdmin.js

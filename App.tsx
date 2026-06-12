@@ -12,6 +12,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import AdminDashboardScreen from './src/screens/admin/AdminDashboardScreen';
 import AdminEventFormScreen from './src/screens/admin/AdminEventFormScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { useNotifications } from './src/hooks/useNotifications';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -64,6 +65,7 @@ function TabNavigator() {
 
 function RootNavigator() {
   const { user, loading } = useAuth();
+  useNotifications();
 
   if (loading) {
     return (

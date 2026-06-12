@@ -7,7 +7,7 @@ import { useFollow } from '../hooks/useFollow';
 import { Temple } from '../types/Temple';
 
 export default function ProfileScreen() {
-    const { user, logout, isAdmin } = useAuth();
+    const { user, logout } = useAuth();
     const { followedTemples, unfollow } = useFollow();
     const [temples, setTemples] = useState<Temple[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,9 +41,6 @@ export default function ProfileScreen() {
                     <Text style={styles.avatarText}>{initials}</Text>
                 </View>
                 <Text style={styles.email}>{user?.email}</Text>
-                <Text style={{ color: 'white', fontSize: 12, marginTop: 4 }}>
-                    {isAdmin ? '⭐ Admin' : 'User'}
-                </Text>
             </View>
 
             <ScrollView
