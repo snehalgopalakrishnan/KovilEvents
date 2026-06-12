@@ -3,6 +3,28 @@ import { useState, useEffect } from 'react';
 import { collection, addDoc, updateDoc, doc, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { Temple } from '../../types/Temple';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+function convertTo24Hour(timeStr: string) {
+    if (!timeStr) return '00:00';
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':');
+    if (hours === '12') hours = '00';
+    if (modifier === 'PM') hours = String(parseInt(hours, 10) + 12);
+    return `${hours}:${minutes}`;
+}
+
+function formatDate(date: Date) {
+    return date.toISOString().split('T')[0];
+}
+
+function formatTime(date: Date) {
+    return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+}
 
 export default function AdminEventFormScreen({ route, navigation }: any) {
     const existingEvent = route.params?.event;
@@ -10,8 +32,10 @@ export default function AdminEventFormScreen({ route, navigation }: any) {
 
     const [title, setTitle] = useState(existingEvent?.title ?? '');
     const [description, setDescription] = useState(existingEvent?.description ?? '');
-    const [date, setDate] = useState(existingEvent?.date ?? '');
-    const [time, setTime] = useState(existingEvent?.time ?? '');
+    const [date, setDate] = useState(existingEvent?.date ? new Date(existingEvent.date) : new Date());
+    const [time, setTime] = useState(existingEvent?.date ? new Date(`${existingEvent.date}T${convertTo24Hour(existingEvent.time)}`) : new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false);
     const [type, setType] = useState(existingEvent?.type ?? 'festival');
     const [templeId, setTempleId] = useState(existingEvent?.templeId ?? '');
     const [templeName, setTempleName] = useState(existingEvent?.templeName ?? '');
@@ -19,6 +43,7 @@ export default function AdminEventFormScreen({ route, navigation }: any) {
     const [loading, setLoading] = useState(false);
     const [pdfUrl, setPdfUrl] = useState(existingEvent?.pdfUrl ?? '');
     const [pdfName, setPdfName] = useState(existingEvent?.pdfName ?? '');
+
 
     const EVENT_TYPES = ['festival', 'ritual', 'procession', 'other'];
 
@@ -36,6 +61,21 @@ export default function AdminEventFormScreen({ route, navigation }: any) {
     }, []);
 
     async function handleSave() {
+        await addDoc(collection(db, 'events'), {
+            title, description,
+            date: formatDate(date),
+            time: formatTime(time),
+            type, templeId, templeName,
+            pdfUrl, pdfName,
+            createdAt: new Date().toISOString(),
+        });
+        await updateDoc(doc(db, 'events', existingEvent.id), {
+            title, description,
+            date: formatDate(date),
+            time: formatTime(time),
+            type, templeId, templeName,
+            pdfUrl, pdfName
+        });
         if (!title || !date || !time || !templeId) {
             Alert.alert('Missing fields', 'Please fill in title, date, time and select a temple.');
             return;
@@ -99,23 +139,48 @@ export default function AdminEventFormScreen({ route, navigation }: any) {
                     numberOfLines={3}
                 />
 
-                <Text style={styles.label}>Date * (YYYY-MM-DD)</Text>
-                <TextInput
-                    style={styles.input}
-                    value={date}
-                    onChangeText={setDate}
-                    placeholder="e.g. 2026-11-20"
-                    placeholderTextColor="#9CA3AF"
-                />
+                <Text style={styles.label}>Date *</Text>
+                <TouchableOpacity
+                    style={styles.pickerBtn}
+                    onPress={() => setShowDatePicker(true)}
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.pickerBtnText}>📅 {formatDate(date)}</Text>
+                </TouchableOpacity>
+
+                {showDatePicker && (
+                    <DateTimePicker
+                        value={date}
+                        mode="date"
+                        display="spinner"
+                        minimumDate={new Date()}
+                        onChange={(event, selectedDate) => {
+                            setShowDatePicker(false);
+                            if (selectedDate) setDate(selectedDate);
+                        }}
+                    />
+                )}
 
                 <Text style={styles.label}>Time *</Text>
-                <TextInput
-                    style={styles.input}
-                    value={time}
-                    onChangeText={setTime}
-                    placeholder="e.g. 6:00 PM"
-                    placeholderTextColor="#9CA3AF"
-                />
+                <TouchableOpacity
+                    style={styles.pickerBtn}
+                    onPress={() => setShowTimePicker(true)}
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.pickerBtnText}>🕐 {formatTime(time)}</Text>
+                </TouchableOpacity>
+
+                {showTimePicker && (
+                    <DateTimePicker
+                        value={time}
+                        mode="time"
+                        display="spinner"
+                        onChange={(event, selectedTime) => {
+                            setShowTimePicker(false);
+                            if (selectedTime) setTime(selectedTime);
+                        }}
+                    />
+                )}
 
                 <Text style={styles.label}>Event type *</Text>
                 <View style={styles.typeRow}>
@@ -292,5 +357,16 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 15,
         fontWeight: '600',
+    },
+    pickerBtn: {
+        backgroundColor: '#FFFFFF',
+        borderWidth: 0.5,
+        borderColor: '#E5E7EB',
+        borderRadius: 10,
+        padding: 14,
+    },
+    pickerBtnText: {
+        fontSize: 14,
+        color: '#1C1917',
     },
 });

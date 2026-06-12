@@ -1,14 +1,14 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import { useEffect, useState } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { KovilEvent } from '../types/Event';
 
 const TYPE_COLORS: Record<KovilEvent['type'], { bg: string; text: string }> = {
-  festival:   { bg: '#FEF3E2', text: '#92400E' },
-  ritual:     { bg: '#F0FDF4', text: '#166534' },
+  festival: { bg: '#FEF3E2', text: '#92400E' },
+  ritual: { bg: '#F0FDF4', text: '#166534' },
   procession: { bg: '#EFF6FF', text: '#1D4ED8' },
-  other:      { bg: '#F3F4F6', text: '#374151' },
+  other: { bg: '#F3F4F6', text: '#374151' },
 };
 
 function formatDate(dateStr: string) {
@@ -31,13 +31,24 @@ function EventCard({ event }: { event: KovilEvent }) {
         <Text style={styles.dateMonth}>{month}</Text>
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.eventTitle}>{event.title ?? 'Untitled Event'}</Text>
-        <Text style={styles.templeName}>🛕 {event.templeName ?? 'Unknown Temple'}</Text>
+        <Text style={styles.eventTitle}>{event.title}</Text>
+        <Text style={styles.templeName}>🛕 {event.templeName}</Text>
         <View style={[styles.badge, { backgroundColor: colors.bg }]}>
           <Text style={[styles.badgeText, { color: colors.text }]}>
             {type.charAt(0).toUpperCase() + type.slice(1)}
           </Text>
         </View>
+        {/* Share button goes here 👇 */}
+        <TouchableOpacity
+          style={styles.shareBtn}
+          onPress={() => {
+            const message = `🛕 ${event.templeName}\n📅 ${event.title}\n🗓 ${event.date} at ${event.time}\n\nDownload TempleAlert app to follow this temple and get event notifications!`;
+            Linking.openURL(`whatsapp://send?text=${encodeURIComponent(message)}`);
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.shareBtnText}>📤 Share</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -48,18 +59,23 @@ export default function EventsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, 'events'), orderBy('date', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+  const q = query(collection(db, 'events'), orderBy('date', 'asc'));
+  const unsubscribe = onSnapshot(q, 
+    (snapshot) => {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       })) as KovilEvent[];
       setEvents(data);
       setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+    },
+    (error) => {
+      console.error('Firestore error:', error);
+      setLoading(false);
+    }
+  );
+  return () => unsubscribe();
+}, []);
 
   return (
     <View style={styles.container}>
@@ -188,6 +204,33 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 10,
+    fontWeight: '500',
+  },
+  whatsappBtn: {
+    backgroundColor: '#25D366',
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  whatsappBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  shareBtn: {
+    marginTop: 6,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    alignSelf: 'flex-start',
+    borderWidth: 0.5,
+    borderColor: '#86EFAC',
+  },
+  shareBtnText: {
+    fontSize: 11,
+    color: '#166534',
     fontWeight: '500',
   },
 });

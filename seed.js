@@ -23,6 +23,7 @@ const temples = [
     timing: '5:30 AM – 8:00 PM',
     latitude: 10.7804268,
     longitude: 76.6549338,
+    whatsappLink: '',
   },
   {
     name: 'Sree Chinmaya Guruvayurappan Temple',
@@ -33,6 +34,7 @@ const temples = [
     timing: '5:00 – 10:30 AM, 5:00 – 8:00 PM',
     latitude: 10.7844041,
     longitude: 76.6535289,
+    whatsappLink: '',
   },
   {
     name: 'Sree Vishalakshi Samathe Vishwanatha Temple',
@@ -43,6 +45,7 @@ const temples = [
     timing: '5:00 AM – 7:30 PM',
     latitude: 10.783469,
     longitude: 76.656429,
+    whatsappLink: '',
   },
   {
     name: 'Shri Vishweshwara Temple',
@@ -53,6 +56,7 @@ const temples = [
     timing: '5:00 AM – 8:00 PM',
     latitude: 10.7555915,
     longitude: 76.6481794,
+    whatsappLink: '',
   },
 ];
 

@@ -8,4 +8,5 @@ export type Temple = {
   timing?: string;
   latitude?: number;
   longitude?: number;
+  whatsappLink?: string;
 };

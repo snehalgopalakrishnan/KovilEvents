@@ -31,6 +31,9 @@
         "projectId": "ac6af742-2864-41e4-90ea-455c4190a738"
       }
     },
-    "owner": "snehalgopalakrishnan"
+    "owner": "snehalgopalakrishnan",
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
   }
 }

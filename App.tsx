@@ -14,6 +14,7 @@ import AdminEventFormScreen from './src/screens/admin/AdminEventFormScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { useNotifications } from './src/hooks/useNotifications';
 import TempleDetailScreen from './src/screens/TempleDetailScreen';
+import AdminTempleFormScreen from './src/screens/admin/AdminTempleFormScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -83,6 +84,7 @@ function RootNavigator() {
       <Stack.Screen name="Main" component={TabNavigator} />
       <Stack.Screen name="AddEvent" component={AdminEventFormScreen} />
       <Stack.Screen name="TempleDetail" component={TempleDetailScreen} />
+      <Stack.Screen name="EditTemple" component={AdminTempleFormScreen} />
     </Stack.Navigator>
   );
 }
