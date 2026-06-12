@@ -1,5 +1,7 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { EVENTS } from '../data/mockData';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useEffect, useState } from 'react';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../../firebase';
 import { KovilEvent } from '../types/Event';
 
 const TYPE_COLORS: Record<KovilEvent['type'], { bg: string; text: string }> = {
@@ -18,8 +20,9 @@ function formatDate(dateStr: string) {
 }
 
 function EventCard({ event }: { event: KovilEvent }) {
-  const { day, month } = formatDate(event.date);
-  const colors = TYPE_COLORS[event.type];
+  const { day, month } = formatDate(event.date ?? '2026-01-01');
+  const colors = TYPE_COLORS[event.type] ?? TYPE_COLORS['other'];
+  const type = event.type ?? 'other';
 
   return (
     <TouchableOpacity style={styles.card} activeOpacity={0.8}>
@@ -28,11 +31,11 @@ function EventCard({ event }: { event: KovilEvent }) {
         <Text style={styles.dateMonth}>{month}</Text>
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.eventTitle}>{event.title}</Text>
-        <Text style={styles.templeName}>🛕 {event.templeName}</Text>
+        <Text style={styles.eventTitle}>{event.title ?? 'Untitled Event'}</Text>
+        <Text style={styles.templeName}>🛕 {event.templeName ?? 'Unknown Temple'}</Text>
         <View style={[styles.badge, { backgroundColor: colors.bg }]}>
           <Text style={[styles.badgeText, { color: colors.text }]}>
-            {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+            {type.charAt(0).toUpperCase() + type.slice(1)}
           </Text>
         </View>
       </View>
@@ -41,25 +44,47 @@ function EventCard({ event }: { event: KovilEvent }) {
 }
 
 export default function EventsScreen() {
+  const [events, setEvents] = useState<KovilEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, 'events'), orderBy('date', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as KovilEvent[];
+      setEvents(data);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   return (
     <View style={styles.container}>
-
       <View style={styles.header}>
         <Text style={styles.headerSub}>Palakkad Temples</Text>
         <Text style={styles.headerTitle}>Upcoming Events</Text>
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.sectionLabel}>All Events</Text>
-        {EVENTS.map(event => (
-          <EventCard key={event.id} event={event} />
-        ))}
-      </ScrollView>
-
+      {loading ? (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="large" color="#B45309" />
+          <Text style={styles.loadingText}>Loading events...</Text>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.sectionLabel}>All Events</Text>
+          {events.map(event => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -84,6 +109,16 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  loadingBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#9CA3AF',
   },
   scroll: {
     flex: 1,
